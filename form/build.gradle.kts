@@ -7,7 +7,7 @@ plugins {
     id("signing")
 }
 
-group = "dev.voir.radianced"
+group = "dev.voir"
 version = "1.0.0"
 
 kotlin {
@@ -21,7 +21,7 @@ kotlin {
         iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "RadiancedForm"
+            baseName = "Formica"
             isStatic = true
         }
     }
@@ -45,7 +45,7 @@ kotlin {
 }
 
 android {
-    namespace = "dev.voir.radianced.form"
+    namespace = "dev.voir.formica"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
@@ -60,7 +60,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    
+
     kotlin {
         jvmToolchain(11)
     }

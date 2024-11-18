@@ -1,4 +1,4 @@
-# Radianced: Form
+# Formica
 
 A Kotlin Compose Multiplatform library for managing form states, validations, and data binding in a
 declarative way. This library aims to simplify form handling in Compose by providing hooks and
@@ -10,6 +10,6 @@ Add the following dependency to your project:
 
 ```gradle
 dependencies {
-    implementation("dev.voir.radianced:form:1.0.0")
+    implementation("dev.voir.formica:1.0.0")
 }
 ```

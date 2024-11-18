@@ -1,13 +1,13 @@
-package dev.voir.radianced.form.rules
+package dev.voir.formica.rules
 
-import dev.voir.radianced.form.FormFieldResult
+import dev.voir.formica.FormFieldResult
 
-class FloatRangeRule(
-    private val min: Float,
-    private val max: Float,
+class IntegerRangeRule(
+    private val min: Int,
+    private val max: Int,
     private val message: String? = null
-) : ValidationRule<Float> {
-    override fun validate(value: Float): FormFieldResult {
+) : ValidationRule<Int> {
+    override fun validate(value: Int): FormFieldResult {
         return if ((value >= min) && (value <= max)) {
             FormFieldResult.Success
         } else {

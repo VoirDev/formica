@@ -1,4 +1,4 @@
-rootProject.name = "radianced-form"
+rootProject.name = "Formica"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

@@ -1,6 +1,6 @@
-package dev.voir.radianced.form.rules
+package dev.voir.formica.rules
 
-import dev.voir.radianced.form.FormFieldResult
+import dev.voir.formica.FormFieldResult
 
 interface ValidationRule<V : Any?> {
     fun validate(value: V): FormFieldResult

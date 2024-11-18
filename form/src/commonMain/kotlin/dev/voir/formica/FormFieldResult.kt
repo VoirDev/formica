@@ -1,4 +1,4 @@
-package dev.voir.radianced.form
+package dev.voir.formica
 
 sealed class FormFieldResult {
     data object Success : FormFieldResult()
