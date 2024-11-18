@@ -17,7 +17,7 @@ class FormicaTest {
         val formica = Formica(initialData = testData)
 
         assertEquals(testData, formica.data.first())
-        assertTrue(formica.state.first() is FormicaResult.NoInput)
+        assertTrue(formica.result.first() is FormicaResult.NoInput)
     }
 
     @Test
@@ -62,7 +62,7 @@ class FormicaTest {
 
         formica.onChange(TestData::field1, "updated")
         assertEquals("updated", formica.data.first().field1)
-        assertEquals(FormicaResult.NoInput, formica.state.first())
+        assertEquals(FormicaResult.NoInput, formica.result.first())
     }
 
     @Test
@@ -99,7 +99,7 @@ class FormicaTest {
         assertEquals(FormicaResult.Valid, formica.validate())
         formica.onChange(TestData::field1, "")
         formica.validate()
-        assertTrue(formica.state.first() is FormicaResult.Error)
+        assertTrue(formica.result.first() is FormicaResult.Error)
     }
 
     @Test

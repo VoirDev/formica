@@ -22,6 +22,10 @@ class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit
     val result: StateFlow<FormicaResult>
         get() = _result
 
+    /**
+     * Validate all fields in the form
+     * @return Result of the form validation
+     */
     fun validate(): FormicaResult {
         val errors = fields.map { field ->
             field.value.isValid()
@@ -37,6 +41,9 @@ class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit
         return newState
     }
 
+    /**
+     * Validate all form fields and if form is valid call onSubmit callback
+     */
     fun submit() {
         val result = validate()
         if (result is FormicaResult.Valid) {
@@ -44,6 +51,11 @@ class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit
         }
     }
 
+    /**
+     * Change form value by property name
+     * @param property Field name, e.g FormScheme::firstName
+     * @param value New value of the field
+     */
     fun <Value : Any?> onChange(property: KMutableProperty1<Data, Value>, value: Value) {
         val newData = data.value
         property.setValue(newData, property, value)
@@ -51,6 +63,9 @@ class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit
         fields[property]?.onChange(value)
     }
 
+    /**
+     * Register field in the form
+     */
     fun <Value : Any?> registerField(
         name: KMutableProperty1<Data, Value>,
         required: Boolean,
