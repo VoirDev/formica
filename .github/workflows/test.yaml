@@ -28,7 +28,7 @@ jobs:
 
       - name: Run tests
         run: |
-          ./gradlew check
+          ./gradlew formica:check
 
       - name: Archive test report
         uses: actions/upload-artifact@v4
