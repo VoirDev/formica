@@ -39,7 +39,7 @@ kotlin {
             implementation(compose.material)
             implementation(compose.ui)
 
-            implementation(projects.form)
+            implementation(projects.formica)
         }
     }
 }
