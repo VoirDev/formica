@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "dev.voir"
-version = "1.0.0-aplha01"
+version = "1.0.0-alpha01"
 
 kotlin {
     androidTarget {

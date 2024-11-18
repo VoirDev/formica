@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.voir.formica.FormicaFieldResult
-import dev.voir.formica.FormicaState
+import dev.voir.formica.FormicaResult
 import dev.voir.formica.rules.NotEmptyRule
 import dev.voir.formica.sample.ui.FormFieldWrapper
 import dev.voir.formica.ui.Formica
@@ -145,9 +145,9 @@ fun App() {
                 formError = null
 
                 val state = formica.validate()
-                if (state is FormicaState.Valid) {
+                if (state is FormicaResult.Valid) {
                     formError = null
-                } else if (state is FormicaState.Error) {
+                } else if (state is FormicaResult.Error) {
                     formError = state.message
                 }
             }) {

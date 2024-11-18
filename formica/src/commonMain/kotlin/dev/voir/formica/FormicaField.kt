@@ -24,6 +24,11 @@ class FormicaField<Value : Any?>(
     private val result: MutableStateFlow<FormicaFieldResult> =
         MutableStateFlow(FormicaFieldResult.NoInput)
 
+    /**
+     * Update field value with new one
+     *
+     * @param input New field value
+     */
     fun onChange(input: Value?) {
         value.value = input
 
@@ -32,6 +37,11 @@ class FormicaField<Value : Any?>(
         }
     }
 
+    /**
+     * Validate field
+     *
+     * @return true if field is valid, otherwise false
+     */
     fun isValid(): Boolean = validate(value.value) is FormicaFieldResult.Success
 
     private fun validate(input: Value?): FormicaFieldResult {

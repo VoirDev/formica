@@ -12,9 +12,7 @@ fun <Data : Any> Formica(
     content: @Composable FormicaScope<Data>.() -> Unit
 ) {
     val scope = remember {
-        derivedStateOf {
-            FormicaScope(formica = formica)
-        }
+        derivedStateOf { FormicaScope(formica = formica) }
     }
     scope.value.content()
 }
