@@ -1,21 +1,21 @@
 package dev.voir.formica.rules
 
-import dev.voir.formica.FormFieldResult
+import dev.voir.formica.FormicaFieldResult
 
 class WebUrlRule(
     private val protocolRequired: Boolean = false,
     private val message: String? = null
 ) : ValidationRule<String> {
-    override fun validate(value: String): FormFieldResult {
+    override fun validate(value: String): FormicaFieldResult {
         val result = if (protocolRequired) {
             value.matches(HTTP_URL_PATTERN.toRegex())
         } else {
             value.matches(HTTP_URL_PATTERN.toRegex()) || value.matches(DOMAIN_URL_PATTERN.toRegex())
         }
         return if (result) {
-            FormFieldResult.Success
+            FormicaFieldResult.Success
         } else {
-            FormFieldResult.Error(message ?: "Must be a valid URL.")
+            FormicaFieldResult.Error(message ?: "Must be a valid URL.")
         }
     }
 

@@ -29,3 +29,4 @@ dependencyResolutionManagement {
 }
 
 include(":form")
+include(":sample")

@@ -1,14 +1,14 @@
 package dev.voir.formica.rules
 
-import dev.voir.formica.FormFieldResult
+import dev.voir.formica.FormicaFieldResult
 
 class MaxLengthRule(private val option: Int, private val message: String? = null) :
     ValidationRule<String> {
-    override fun validate(value: String): FormFieldResult {
+    override fun validate(value: String): FormicaFieldResult {
         return if (value.count() <= option) {
-            FormFieldResult.Success
+            FormicaFieldResult.Success
         } else {
-            FormFieldResult.Error(message ?: "Must not exceed $option characters.")
+            FormicaFieldResult.Error(message ?: "Must not exceed $option characters.")
         }
     }
 }

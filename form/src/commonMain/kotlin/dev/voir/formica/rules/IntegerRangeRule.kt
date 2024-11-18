@@ -1,17 +1,17 @@
 package dev.voir.formica.rules
 
-import dev.voir.formica.FormFieldResult
+import dev.voir.formica.FormicaFieldResult
 
 class IntegerRangeRule(
     private val min: Int,
     private val max: Int,
     private val message: String? = null
 ) : ValidationRule<Int> {
-    override fun validate(value: Int): FormFieldResult {
+    override fun validate(value: Int): FormicaFieldResult {
         return if ((value >= min) && (value <= max)) {
-            FormFieldResult.Success
+            FormicaFieldResult.Success
         } else {
-            FormFieldResult.Error(message ?: "Must be a number between $min and $max.")
+            FormicaFieldResult.Error(message ?: "Must be a number between $min and $max.")
         }
     }
 }

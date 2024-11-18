@@ -16,12 +16,12 @@ class FormicaScope<Data>(private val f: Formica<Data>) {
         @Composable
         get() = f.data.collectAsState(f.initialData)
 
-    fun submit() {
-        f.submit()
+    fun validate() {
+        f.validate()
     }
 
-    fun <Value : Any?> onFormChange(fieldName: KMutableProperty1<Data, Value>, value: Value) {
-        f.onFormChange(fieldName, value)
+    fun <Value : Any?> onChange(fieldName: KMutableProperty1<Data, Value>, value: Value) {
+        f.onChange(fieldName, value)
     }
 
     fun <Value : Any?> registerField(

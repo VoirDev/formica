@@ -3,6 +3,14 @@ package dev.voir.formica
 import dev.voir.formica.rules.ValidationRule
 import kotlinx.coroutines.flow.MutableStateFlow
 
+sealed class FormicaFieldResult {
+    data object Success : FormicaFieldResult()
+
+    data class Error(val message: String) : FormicaFieldResult()
+
+    data object NoInput : FormicaFieldResult()
+}
+
 class FormicaField<Value : Any?>(
     initialValue: Value,
     private val required: Boolean,
@@ -13,8 +21,8 @@ class FormicaField<Value : Any?>(
 ) {
     val value: MutableStateFlow<Value?> = MutableStateFlow(initialValue)
     val error: MutableStateFlow<String?> = MutableStateFlow(null)
-    private val result: MutableStateFlow<FormFieldResult> =
-        MutableStateFlow(FormFieldResult.NoInput)
+    private val result: MutableStateFlow<FormicaFieldResult> =
+        MutableStateFlow(FormicaFieldResult.NoInput)
 
     fun onInput(input: Value?) {
         value.value = input
@@ -24,15 +32,15 @@ class FormicaField<Value : Any?>(
         }
     }
 
-    fun isValid(): Boolean = validate(value.value) is FormFieldResult.Success
+    fun isValid(): Boolean = validate(value.value) is FormicaFieldResult.Success
 
-    private fun validate(input: Value?): FormFieldResult {
+    private fun validate(input: Value?): FormicaFieldResult {
         // If field is optional and value is null
         if (!required && input == null) {
-            return FormFieldResult.Success
+            return FormicaFieldResult.Success
         } else if (required && input == null) {
             val message = requiredError ?: "Field is required"
-            val result = FormFieldResult.Error(message = message)
+            val result = FormicaFieldResult.Error(message = message)
 
             this.result.value = result
             this.error.value = result.message
@@ -42,15 +50,15 @@ class FormicaField<Value : Any?>(
 
         val validationResult = validators.map { it.validate(input!!) }
         var result =
-            validationResult.find { it is FormFieldResult.Error } ?: FormFieldResult.Success
+            validationResult.find { it is FormicaFieldResult.Error } ?: FormicaFieldResult.Success
 
         val customValidation = customValidation?.let { it(input!!) }
         if (customValidation !== null) {
-            result = FormFieldResult.Error(message = customValidation)
+            result = FormicaFieldResult.Error(message = customValidation)
         }
 
         this.result.value = result
-        if (result is FormFieldResult.Error) {
+        if (result is FormicaFieldResult.Error) {
             this.error.value = result.message
         } else {
             this.error.value = null

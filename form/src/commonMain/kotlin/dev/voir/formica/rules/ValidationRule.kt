@@ -1,7 +1,7 @@
 package dev.voir.formica.rules
 
-import dev.voir.formica.FormFieldResult
+import dev.voir.formica.FormicaFieldResult
 
 interface ValidationRule<V : Any?> {
-    fun validate(value: V): FormFieldResult
+    fun validate(value: V): FormicaFieldResult
 }

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.7.1"
+agp = "8.7.2"
 android-compileSdk = "34"
 android-minSdk = "24"
 android-targetSdk = "34"
@@ -7,8 +7,10 @@ compose-plugin = "1.7.0"
 junit = "4.13.2"
 kotlin = "2.0.21"
 kotlin-coroutines = "1.9.0"
+androidx-activityCompose = "1.9.3"
 
 [libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

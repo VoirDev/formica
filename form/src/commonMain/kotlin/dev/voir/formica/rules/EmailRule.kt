@@ -1,13 +1,13 @@
 package dev.voir.formica.rules
 
-import dev.voir.formica.FormFieldResult
+import dev.voir.formica.FormicaFieldResult
 
 class EmailRule(private val message: String? = null) : ValidationRule<String> {
-    override fun validate(value: String): FormFieldResult {
+    override fun validate(value: String): FormicaFieldResult {
         return if (value.matches(EMAIL_PATTERN.toRegex())) {
-            FormFieldResult.Success
+            FormicaFieldResult.Success
         } else {
-            FormFieldResult.Error(message ?: "Must be a valid email address.")
+            FormicaFieldResult.Error(message ?: "Must be a valid email address.")
         }
     }
 

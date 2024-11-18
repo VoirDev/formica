@@ -4,12 +4,24 @@ import dev.voir.formica.rules.ValidationRule
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.reflect.KMutableProperty1
 
-class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit)? = null) {
+sealed class FormicaState {
+    data object NoInput : FormicaState()
+    data object Valid : FormicaState()
+    data class Error(val message: String) : FormicaState()
+}
+
+class Formica<Data>(
+    val initialData: Data,
+    private val onValid: ((Data) -> Unit)? = null,
+    private val onInvalid: (() -> Unit)? = null
+) {
     private val fields: MutableMap<KMutableProperty1<Data, *>, FormicaField<Any>> = mutableMapOf()
 
     val data: MutableStateFlow<Data> = MutableStateFlow(initialData)
 
-    fun submit() {
+    val state: MutableStateFlow<FormicaState> = MutableStateFlow(FormicaState.NoInput)
+
+    fun validate() {
         // Validate all fields
         val errors = fields.map { field ->
             field.value.isValid()
@@ -17,11 +29,16 @@ class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit
 
         // If all fields valid -> do submit
         if (errors.all { it }) {
-            onSubmit?.let { it(data.value) }
+            state.value = FormicaState.Valid
+            onValid?.let { it(data.value) }
+        } else {
+            state.value = FormicaState.Error(message = "Some fields not valid")
+            // TODO Pass invalid fields
+            onInvalid?.let { it() }
         }
     }
 
-    fun <Value : Any?> onFormChange(property: KMutableProperty1<Data, Value>, value: Value) {
+    fun <Value : Any?> onChange(property: KMutableProperty1<Data, Value>, value: Value) {
         val newData = data.value
         property.setValue(newData, property, value)
         data.value = newData

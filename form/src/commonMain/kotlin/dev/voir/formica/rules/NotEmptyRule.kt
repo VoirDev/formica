@@ -2,13 +2,13 @@ package dev.voir.formica.rules
 
 import dev.voir.formica.FormicaFieldResult
 
-class MinLengthRule(private val option: Int, private val message: String? = null) :
+class NotEmptyRule(private val message: String? = null) :
     ValidationRule<String> {
     override fun validate(value: String): FormicaFieldResult {
-        return if (value.count() >= option) {
+        return if (value.isNotEmpty()) {
             FormicaFieldResult.Success
         } else {
-            FormicaFieldResult.Error(message ?: "Must be at least ${this.option} characters long.")
+            FormicaFieldResult.Error(message ?: "This field cannot be empty.")
         }
     }
 }

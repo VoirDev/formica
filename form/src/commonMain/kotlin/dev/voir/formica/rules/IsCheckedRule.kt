@@ -1,13 +1,13 @@
 package dev.voir.formica.rules
 
-import dev.voir.formica.FormFieldResult
+import dev.voir.formica.FormicaFieldResult
 
 class IsCheckedRule(private val message: String? = null) : ValidationRule<Boolean> {
-    override fun validate(value: Boolean): FormFieldResult {
+    override fun validate(value: Boolean): FormicaFieldResult {
         return if (value) {
-            FormFieldResult.Success
+            FormicaFieldResult.Success
         } else {
-            FormFieldResult.Error(message ?: "Must be checked")
+            FormicaFieldResult.Error(message ?: "Must be checked")
         }
     }
 }

@@ -6,5 +6,12 @@ import androidx.compose.runtime.remember
 @Composable
 fun <Data : Any> rememberFormica(
     initialData: Data,
-    onSubmit: ((Data) -> Unit)? = null,
-) = remember { dev.voir.formica.Formica(initialData = initialData, onSubmit = onSubmit) }
+    onValid: ((Data) -> Unit)? = null,
+    onInvalid: (() -> Unit)? = null,
+) = remember {
+    dev.voir.formica.Formica(
+        initialData = initialData,
+        onValid = onValid,
+        onInvalid = onInvalid
+    )
+}

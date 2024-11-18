@@ -7,7 +7,6 @@ import dev.voir.formica.scopes.FormicaFieldScope
 import dev.voir.formica.scopes.FormicaScope
 import kotlin.reflect.KMutableProperty1
 
-
 @Composable
 fun <Data, Value : Any?> FormicaScope<Data>.FormicaField(
     name: KMutableProperty1<Data, Value>,
