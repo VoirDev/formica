@@ -106,7 +106,6 @@ fun App() {
                     name = FormSchema::additionalText,
                     required = false,
                     customValidation = { value ->
-                        println("Custom validation fire: on $data with $value")
                         if (data.activateAdditionalText && value.isNullOrBlank()) {
                             FormicaFieldResult.Error(message = "Field is required")
                         } else {
@@ -148,7 +147,6 @@ fun App() {
                 val state = formica.validate()
                 if (state is FormicaState.Valid) {
                     formError = null
-                    println(formica.data.value)
                 } else if (state is FormicaState.Error) {
                     formError = state.message
                 }

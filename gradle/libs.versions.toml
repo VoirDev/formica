@@ -3,16 +3,17 @@ agp = "8.7.2"
 android-compileSdk = "34"
 android-minSdk = "24"
 android-targetSdk = "34"
-compose-plugin = "1.7.0"
+compose-plugin = "1.7.1" # https://github.com/JetBrains/compose-multiplatform
 junit = "4.13.2"
-kotlin = "2.0.21"
-kotlin-coroutines = "1.9.0"
+kotlin = "2.0.21" # https://kotlinlang.org/docs/releases.html
+kotlin-coroutines = "1.9.0" # https://github.com/Kotlin/kotlinx.coroutines
 androidx-activityCompose = "1.9.3"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlin-coroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

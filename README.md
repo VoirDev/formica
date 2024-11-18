@@ -10,6 +10,6 @@ Add the following dependency to your project:
 
 ```gradle
 dependencies {
-    implementation("dev.voir.formica:1.0.0")
+    implementation("dev.voir.formica:1.0.0-alpha01")
 }
 ```

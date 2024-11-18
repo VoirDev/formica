@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "dev.voir"
-version = "1.0.0"
+version = "1.0.0-aplha01"
 
 kotlin {
     androidTarget {
@@ -33,13 +33,20 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
         }
+
         commonMain.dependencies {
             implementation(libs.kotlin.reflect)
             implementation(libs.kotlin.coroutines)
 
             implementation(compose.runtime)
         }
+
         iosMain.dependencies {
+        }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
