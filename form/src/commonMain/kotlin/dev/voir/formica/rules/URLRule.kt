@@ -5,8 +5,10 @@ import dev.voir.formica.FormicaFieldResult
 class WebUrlRule(
     private val protocolRequired: Boolean = false,
     private val message: String? = null
-) : ValidationRule<String> {
-    override fun validate(value: String): FormicaFieldResult {
+) : ValidationRule<String?> {
+    override fun validate(value: String?): FormicaFieldResult {
+        if (value == null) return FormicaFieldResult.NoInput
+
         val result = if (protocolRequired) {
             value.matches(HTTP_URL_PATTERN.toRegex())
         } else {

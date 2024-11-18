@@ -2,9 +2,13 @@ package dev.voir.formica.rules
 
 import dev.voir.formica.FormicaFieldResult
 
-class MaxLengthRule(private val option: Int, private val message: String? = null) :
-    ValidationRule<String> {
-    override fun validate(value: String): FormicaFieldResult {
+class MaxLengthRule(
+    private val option: Int,
+    private val message: String? = null
+) : ValidationRule<String?> {
+    override fun validate(value: String?): FormicaFieldResult {
+        if (value == null) return FormicaFieldResult.NoInput
+
         return if (value.count() <= option) {
             FormicaFieldResult.Success
         } else {

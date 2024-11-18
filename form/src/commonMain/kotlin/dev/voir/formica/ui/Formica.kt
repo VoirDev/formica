@@ -7,7 +7,14 @@ import dev.voir.formica.Formica
 import dev.voir.formica.scopes.FormicaScope
 
 @Composable
-fun <Data : Any> Formica(form: Formica<Data>, content: @Composable FormicaScope<Data>.() -> Unit) {
-    val scope = remember { derivedStateOf { FormicaScope(f = form) } }
+fun <Data : Any> Formica(
+    formica: Formica<Data>,
+    content: @Composable FormicaScope<Data>.() -> Unit
+) {
+    val scope = remember {
+        derivedStateOf {
+            FormicaScope(formica = formica)
+        }
+    }
     scope.value.content()
 }

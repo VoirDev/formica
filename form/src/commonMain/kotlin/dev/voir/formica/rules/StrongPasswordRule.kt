@@ -9,9 +9,10 @@ class StrongPasswordRule(
     private val lowercaseMessage: String? = null,
     private val digitMessage: String? = null,
     private val specialCharacterMessage: String? = null,
-) :
-    ValidationRule<String> {
-    override fun validate(value: String): FormicaFieldResult {
+) : ValidationRule<String?> {
+    override fun validate(value: String?): FormicaFieldResult {
+        if (value == null) return FormicaFieldResult.NoInput
+
         return when {
             value.length < minLength -> FormicaFieldResult.Error(
                 lengthMessage ?: "Password must be at least $minLength characters long."

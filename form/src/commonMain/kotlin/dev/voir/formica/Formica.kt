@@ -10,59 +10,50 @@ sealed class FormicaState {
     data class Error(val message: String) : FormicaState()
 }
 
-class Formica<Data>(
-    val initialData: Data,
-    private val onValid: ((Data) -> Unit)? = null,
-    private val onInvalid: (() -> Unit)? = null
-) {
+class Formica<Data>(val initialData: Data) {
     private val fields: MutableMap<KMutableProperty1<Data, *>, FormicaField<Any>> = mutableMapOf()
 
     val data: MutableStateFlow<Data> = MutableStateFlow(initialData)
 
     val state: MutableStateFlow<FormicaState> = MutableStateFlow(FormicaState.NoInput)
 
-    fun validate() {
-        // Validate all fields
+    fun validate(): FormicaState {
         val errors = fields.map { field ->
             field.value.isValid()
         }
-
-        // If all fields valid -> do submit
-        if (errors.all { it }) {
-            state.value = FormicaState.Valid
-            onValid?.let { it(data.value) }
+        val newState = if (errors.all { it }) {
+            FormicaState.Valid
         } else {
-            state.value = FormicaState.Error(message = "Some fields not valid")
             // TODO Pass invalid fields
-            onInvalid?.let { it() }
+            FormicaState.Error(message = "Some fields not valid")
         }
+
+        state.value = newState
+        return newState
     }
 
     fun <Value : Any?> onChange(property: KMutableProperty1<Data, Value>, value: Value) {
         val newData = data.value
         property.setValue(newData, property, value)
         data.value = newData
-        fields[property]?.onInput(value)
+        fields[property]?.onChange(value)
     }
 
     fun <Value : Any?> registerField(
         name: KMutableProperty1<Data, Value>,
         required: Boolean,
-        validators: Set<ValidationRule<Value>>,
-        customValidation: ((Data, Value) -> String?)? = null,
-        validateOnInput: Boolean = true,
+        validators: Set<ValidationRule<Value?>>,
+        customValidation: ((Value?) -> FormicaFieldResult)? = null,
+        validateOnChange: Boolean = true,
         requiredError: String? = null,
-    ): FormicaField<Value> {
+    ): FormicaField<Value?> {
         val field = FormicaField(
             initialValue = name.get(data.value),
             required = required,
             requiredError = requiredError,
             validators = validators,
-            customValidation = {
-                if (customValidation === null) return@FormicaField null
-                return@FormicaField customValidation(data.value, it)
-            },
-            validateOnInput = validateOnInput
+            customValidation = customValidation,
+            validateOnChange = validateOnChange
         )
         fields[name] = field as FormicaField<Any>
 

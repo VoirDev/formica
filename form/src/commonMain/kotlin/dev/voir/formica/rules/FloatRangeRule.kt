@@ -6,8 +6,10 @@ class FloatRangeRule(
     private val min: Float,
     private val max: Float,
     private val message: String? = null
-) : ValidationRule<Float> {
-    override fun validate(value: Float): FormicaFieldResult {
+) : ValidationRule<Float?> {
+    override fun validate(value: Float?): FormicaFieldResult {
+        if (value == null) return FormicaFieldResult.NoInput
+        
         return if ((value >= min) && (value <= max)) {
             FormicaFieldResult.Success
         } else {
