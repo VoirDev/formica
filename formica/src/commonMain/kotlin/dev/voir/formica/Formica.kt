@@ -2,40 +2,52 @@ package dev.voir.formica
 
 import dev.voir.formica.rules.ValidationRule
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.reflect.KMutableProperty1
 
-sealed class FormicaState {
-    data object NoInput : FormicaState()
-    data object Valid : FormicaState()
-    data class Error(val message: String) : FormicaState()
+sealed class FormicaResult {
+    data object NoInput : FormicaResult()
+    data object Valid : FormicaResult()
+    data class Error(val message: String) : FormicaResult()
 }
 
-class Formica<Data>(val initialData: Data) {
+class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit)? = null) {
     private val fields: MutableMap<KMutableProperty1<Data, *>, FormicaField<Any>> = mutableMapOf()
 
-    val data: MutableStateFlow<Data> = MutableStateFlow(initialData)
+    private val _data: MutableStateFlow<Data> = MutableStateFlow(initialData)
+    val data: StateFlow<Data>
+        get() = _data
 
-    val state: MutableStateFlow<FormicaState> = MutableStateFlow(FormicaState.NoInput)
+    private val _result: MutableStateFlow<FormicaResult> = MutableStateFlow(FormicaResult.NoInput)
+    val result: StateFlow<FormicaResult>
+        get() = _result
 
-    fun validate(): FormicaState {
+    fun validate(): FormicaResult {
         val errors = fields.map { field ->
             field.value.isValid()
         }
         val newState = if (errors.all { it }) {
-            FormicaState.Valid
+            FormicaResult.Valid
         } else {
             // TODO Pass information about invalid fields
-            FormicaState.Error(message = "Some fields not valid")
+            FormicaResult.Error(message = "Some fields not valid")
         }
 
-        state.value = newState
+        _result.value = newState
         return newState
+    }
+
+    fun submit() {
+        val result = validate()
+        if (result is FormicaResult.Valid) {
+            onSubmit?.let { it(data.value) }
+        }
     }
 
     fun <Value : Any?> onChange(property: KMutableProperty1<Data, Value>, value: Value) {
         val newData = data.value
         property.setValue(newData, property, value)
-        data.value = newData
+        _data.value = newData
         fields[property]?.onChange(value)
     }
 
