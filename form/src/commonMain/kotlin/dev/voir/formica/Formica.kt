@@ -24,7 +24,7 @@ class Formica<Data>(val initialData: Data) {
         val newState = if (errors.all { it }) {
             FormicaState.Valid
         } else {
-            // TODO Pass invalid fields
+            // TODO Pass information about invalid fields
             FormicaState.Error(message = "Some fields not valid")
         }
 
