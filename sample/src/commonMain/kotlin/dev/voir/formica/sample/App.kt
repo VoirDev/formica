@@ -3,6 +3,10 @@ package dev.voir.formica.sample
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
@@ -11,15 +15,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.voir.formica.FormicaFieldResult
 import dev.voir.formica.FormicaResult
+import dev.voir.formica.collectDataAsState
+import dev.voir.formica.rememberFormica
 import dev.voir.formica.rules.NotEmptyRule
 import dev.voir.formica.sample.ui.FormFieldWrapper
 import dev.voir.formica.ui.Formica
 import dev.voir.formica.ui.FormicaField
-import dev.voir.formica.ui.rememberFormica
 
 data class FormSchema(
     var text: String,
@@ -38,11 +45,17 @@ fun App() {
             additionalText = null,
         )
     )
-    var formError by remember { mutableStateOf<String?>(null) }
+    val formData by formica.collectDataAsState()
 
-    Column {
+    var formError by remember { mutableStateOf<String?>(null) }
+    var formResult by remember { mutableStateOf<FormSchema?>(null) }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
         Formica(formica = formica) {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 FormicaField(
                     name = FormSchema::text,
                     required = true,
@@ -50,6 +63,7 @@ fun App() {
                 ) {
                     FormFieldWrapper {
                         androidx.compose.material.TextField(
+                            modifier = Modifier.fillMaxWidth(),
                             value = field.value ?: "",
                             label = {
                                 Text("Required text")
@@ -70,6 +84,7 @@ fun App() {
                 FormicaField(name = FormSchema::optionalText, required = false) {
                     FormFieldWrapper {
                         androidx.compose.material.TextField(
+                            modifier = Modifier.fillMaxWidth(),
                             value = field.value ?: "",
                             label = {
                                 Text("Optional text")
@@ -91,13 +106,17 @@ fun App() {
                     name = FormSchema::activateAdditionalText,
                     required = true,
                 ) {
-                    Row {
-                        Text("Activate additional text?")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Checkbox(
                             checked = field.value ?: false,
                             onCheckedChange = {
                                 onChange(FormSchema::activateAdditionalText, it)
                             })
+                        Text("Activate additional text?")
                     }
                 }
 
@@ -106,16 +125,16 @@ fun App() {
                     name = FormSchema::additionalText,
                     required = false,
                     customValidation = { value ->
-                        if (data.activateAdditionalText && value.isNullOrBlank()) {
+                        if (formData.activateAdditionalText && value.isNullOrBlank()) {
                             FormicaFieldResult.Error(message = "Field is required")
                         } else {
-
                             FormicaFieldResult.Success
                         }
                     }
                 ) {
                     FormFieldWrapper {
                         androidx.compose.material.TextField(
+                            modifier = Modifier.fillMaxWidth(),
                             value = field.value ?: "",
                             label = {
                                 Text("Required text if checkbox activated")
@@ -136,22 +155,40 @@ fun App() {
             }
         }
 
-        formError?.let {
-            Text(text = it, color = Color.Red)
-        }
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
+            modifier = Modifier.fillMaxWidth(),
             onClick = {
+                // Reset result and error
+                formResult = null
                 formError = null
 
                 val state = formica.validate()
                 if (state is FormicaResult.Valid) {
                     formError = null
+                    formResult = formica.data.value
                 } else if (state is FormicaResult.Error) {
                     formError = state.message
+                    formResult = null
                 }
             }) {
             Text("Submit")
+        }
+
+        formError?.let {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Form submit error")
+                Text(text = it, color = Color.Red)
+            }
+        }
+
+        formResult?.let {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Form submit result")
+
+                Text(text = it.toString())
+            }
         }
     }
 }
