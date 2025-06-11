@@ -10,7 +10,7 @@ Add the following dependency to your project:
 
 ```gradle
 dependencies {
-    implementation("dev.voir.formica:1.0.0-alpha01")
+    implementation("dev.voir.formica:1.0.0-alpha01") // Not available on public now, you can publish to mavenLocal.
 }
 ```
 

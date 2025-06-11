@@ -1,7 +1,8 @@
 package dev.voir.formica.ui
 
 import androidx.compose.runtime.Composable
-import dev.voir.formica.FormicaField
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import dev.voir.formica.FormicaFieldResult
 import dev.voir.formica.rules.ValidationRule
 import dev.voir.formica.scopes.FormicaFieldScope
@@ -17,18 +18,21 @@ fun <Data, Value : Any?> FormicaScope<Data>.FormicaField(
     customValidation: ((Value?) -> FormicaFieldResult)? = null,
     validateOnChange: Boolean = true,
     content: @Composable FormicaFieldScope<Value?>.() -> Unit
-): FormicaField<Value?> {
-    val field =
-        registerField(
-            name = name,
-            required = required,
-            requiredError = requiredError,
-            validators = validators,
-            customValidation = customValidation,
-            validateOnChange = validateOnChange
-        )
-    val scope = FormicaFieldScope(formField = field)
-    scope.content()
+) {
+    val scope = remember {
+        derivedStateOf {
+            FormicaFieldScope(
+                formField = registerField(
+                    name = name,
+                    required = required,
+                    requiredError = requiredError,
+                    validators = validators,
+                    customValidation = customValidation,
+                    validateOnChange = validateOnChange
+                )
+            )
+        }
+    }
 
-    return field
+    scope.value.content()
 }
