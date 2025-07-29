@@ -5,8 +5,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 
 @Composable
-fun <Data : Any> rememberFormica(initialData: Data) = remember {
-    Formica(initialData = initialData)
+fun <Data : Any> rememberFormica(initialData: Data, onSubmit: ((Data) -> Unit)? = null) = remember {
+    Formica(
+        initialData = initialData,
+        onSubmit = onSubmit
+    )
 }
 
 @Composable
