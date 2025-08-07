@@ -10,9 +10,9 @@ class FormicaFieldScope<V : Any?>(
 ) {
     val field: State<V?>
         @Composable
-        get() = this.formField.value.collectAsState(null)
+        get() = this.formField.value.collectAsState()
 
     val error: State<String?>
         @Composable
-        get() = this.formField.error.collectAsState(null)
+        get() = this.formField.error.collectAsState()
 }
