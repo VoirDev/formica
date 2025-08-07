@@ -64,7 +64,7 @@ fun App() {
                     FormFieldWrapper {
                         androidx.compose.material.TextField(
                             modifier = Modifier.fillMaxWidth(),
-                            value = field.value ?: "",
+                            value = field.value!!,
                             label = {
                                 Text("Required text")
                             },
