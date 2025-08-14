@@ -1,6 +1,6 @@
 package dev.voir.formica
 
-import dev.voir.formica.rules.ValidationRule
+import dev.voir.formica.ui.FormicaField
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
