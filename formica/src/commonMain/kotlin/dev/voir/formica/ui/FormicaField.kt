@@ -11,6 +11,20 @@ import dev.voir.formica.FormicaFieldId
 import dev.voir.formica.FormicaFieldResult
 import dev.voir.formica.ValidationRule
 
+/**
+ * A stable snapshot of a form field's UI-facing state and operations.
+ *
+ * This is what you pass into your composable input components so they have:
+ *  - [value] → the current field value (nullable to represent "empty")
+ *  - [error] → the last validation error message, or null if valid
+ *  - [touched] → whether the user has interacted with the field yet
+ *  - [dirty] → whether the value has changed from its initial value
+ *  - [onChange] → callback to update the value (also updates form data snapshot)
+ *  - [validate] → function to trigger validation manually; returns true if valid
+ *
+ * Marked as @Stable so Compose can optimize recompositions when only internal
+ * values change.
+ */
 @Stable
 data class FieldAdapter<V>(
     val value: V?,
@@ -22,12 +36,30 @@ data class FieldAdapter<V>(
 )
 
 
-// Registers a field once and exposes reactive state + callbacks.
-// Usage:
-// FormField(form, FirstName, validators = setOf(...)) { f ->
-//     BasicTextField(value = f.value ?: "", onValueChange = { f.onChange(it) })
-//     f.error?.let { Text(it) }
-// }
+/**
+ * Register a form field with the given [Formica] instance and expose it to UI
+ * via a [FieldAdapter] in a type-safe, reactive way.
+ *
+ * This overload is for when you have an explicit [form] reference.
+ *
+ * Typical usage in Compose:
+ * ```
+ * FormicaField(form, FirstName, validators = setOf(...)) { f ->
+ *     BasicTextField(
+ *         value = f.value ?: "",
+ *         onValueChange = { f.onChange(it) }
+ *     )
+ *     f.error?.let { Text(it, color = Color.Red) }
+ * }
+ * ```
+ *
+ * @param form The form instance holding all field state and data snapshot.
+ * @param id A [FormicaFieldId] lens for reading/writing this field in the form's data.
+ * @param validators Optional set of ordered validation rules for this field.
+ * @param customValidation Optional extra validation run after [validators].
+ * @param validateOnChange Whether to run validation automatically on every value change.
+ * @param content Composable content lambda that receives a [FieldAdapter] for UI binding.
+ */
 @Composable
 fun <D, V> FormicaField(
     form: Formica<D>,
@@ -35,10 +67,10 @@ fun <D, V> FormicaField(
     validators: Set<ValidationRule<V?>> = emptySet(),
     customValidation: ((V?) -> FormicaFieldResult)? = null,
     validateOnChange: Boolean = true,
-    // Provide content with a convenient adapter
     content: @Composable (FieldAdapter<V>) -> Unit
 ) {
-    // Register once per (form, id)
+    // Register the field once for this form + id combination.
+    // Registration seeds its initial value from the current form data snapshot.
     val field = remember(form, id) {
         form.registerField(
             id = id,
@@ -48,22 +80,21 @@ fun <D, V> FormicaField(
         )
     }
 
-    // Collect reactive bits
+    // Collect reactive field state for UI binding.
+    // These flows update whenever field state changes (value, error, touched, dirty).
     val value by field.value.collectAsState(initial = id.get(form.data.value))
     val error by field.error.collectAsState(initial = null)
     val touched by field.touched.collectAsState(initial = false)
     val dirty by field.dirty.collectAsState(initial = false)
 
-    // Keep field reset in sync if external data snapshot changes (optional)
-    // This ensures that if you replace form.data from the outside (e.g., load draft),
-    // the field UI updates its initial/dirty/touched state accordingly.
+    // Optional: Keep field state in sync if form.data changes externally (e.g., loaded draft).
+    // This resets the field's internal state (value/error/touched/dirty) to match the new snapshot.
     val dataSnapshot by form.data.collectAsState()
-
     LaunchedEffect(dataSnapshot) {
         field.reset(id.get(dataSnapshot))
     }
 
-    // Adapter that UI can use
+    // Package the reactive state and callbacks into a stable adapter for the UI.
     val adapter = remember(value, error, touched, dirty) {
         FieldAdapter(
             value = value,
@@ -75,9 +106,26 @@ fun <D, V> FormicaField(
         )
     }
 
+    // Render UI content with the adapter.
     content(adapter)
 }
 
+/**
+ * Overload of [FormicaField] that uses the ambient [LocalFormica] form context
+ * instead of requiring an explicit [form] parameter.
+ *
+ * Allows cleaner usage when you've wrapped your UI in a FormicaProvider:
+ * ```
+ * FormicaProvider(form) {
+ *     FormicaField(FirstName) { f ->
+ *         BasicTextField(
+ *             value = f.value ?: "",
+ *             onValueChange = { f.onChange(it) }
+ *         )
+ *     }
+ * }
+ * ```
+ */
 @Composable
 fun <D, V> FormicaField(
     id: FormicaFieldId<D, V>,
@@ -86,7 +134,7 @@ fun <D, V> FormicaField(
     validateOnChange: Boolean = true,
     content: @Composable (FieldAdapter<V>) -> Unit
 ) {
-    val form = formicaOf<D>()
+    val form = formicaOf<D>() // Grab the current form from the composition
     FormicaField(
         form = form,
         id = id,
@@ -97,13 +145,28 @@ fun <D, V> FormicaField(
     )
 }
 
+/**
+ * Convenience for reading a field's committed value from a [Formica] instance
+ * reactively (without registering a field).
+ *
+ * Returns the current value of the field from the immutable form data snapshot.
+ * Will recompose whenever [form.data] changes.
+ */
 @Composable
 fun <D, V> rememberFormicaFieldValue(form: Formica<D>, id: FormicaFieldId<D, V>): V? {
     val data by form.data.collectAsState()
     return id.get(data)
 }
 
-// Overload that uses LocalFormica
+/**
+ * Overload of [rememberFormicaFieldValue] that uses [LocalFormica] instead of
+ * requiring an explicit [form] parameter.
+ *
+ * Useful inside a [FormicaProvider] scope:
+ * ```
+ * val firstName = rememberFormicaFieldValue(FirstName) ?: ""
+ * ```
+ */
 @Composable
 fun <D, V> rememberFormicaFieldValue(id: FormicaFieldId<D, V>): V? {
     val form = formicaOf<D>()
