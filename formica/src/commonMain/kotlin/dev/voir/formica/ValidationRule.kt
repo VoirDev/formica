@@ -47,35 +47,35 @@ object ValidationRules {
 
     fun notEmpty(
         message: String = "This field cannot be empty."
-    ): ValidationRule<String> =
+    ): ValidationRule<String?> =
         ValidationRule { v ->
-            if (v.isNotEmpty()) {
-                FormicaFieldResult.Success
-            } else {
-                FormicaFieldResult.Error(message)
+            when {
+                v == null -> FormicaFieldResult.NoInput
+                v.isNotEmpty() -> FormicaFieldResult.Success
+                else -> FormicaFieldResult.Error(message)
             }
         }
 
     fun notBlank(
         message: String = "This field cannot be blank."
-    ): ValidationRule<String> =
+    ): ValidationRule<String?> =
         ValidationRule { v ->
-            if (v.isNotBlank()) {
-                FormicaFieldResult.Success
-            } else {
-                FormicaFieldResult.Error(message)
+            when {
+                v == null -> FormicaFieldResult.NoInput
+                v.isNotBlank() -> FormicaFieldResult.Success
+                else -> FormicaFieldResult.Error(message)
             }
         }
 
     fun email(
         message: String = "Must be a valid email address.",
         pattern: Regex = EMAIL_PATTERN.toRegex()
-    ): ValidationRule<String> =
+    ): ValidationRule<String?> =
         ValidationRule { v ->
-            if (v.matches(pattern)) {
-                FormicaFieldResult.Success
-            } else {
-                FormicaFieldResult.Error(message)
+            when {
+                v == null -> FormicaFieldResult.NoInput
+                v.matches(pattern) -> FormicaFieldResult.Success
+                else -> FormicaFieldResult.Error(message)
             }
         }
 
@@ -86,9 +86,10 @@ object ValidationRules {
         lowercaseMessage: String = "Password must contain at least one lowercase letter.",
         digitMessage: String = "Password must contain at least one digit.",
         specialCharacterMessage: String = "Password must contain at least one special character.",
-    ): ValidationRule<String> =
+    ): ValidationRule<String?> =
         ValidationRule { v ->
             when {
+                v == null -> FormicaFieldResult.NoInput
                 v.length < minLength -> FormicaFieldResult.Error(lengthMessage)
                 !v.any { it.isUpperCase() } -> FormicaFieldResult.Error(uppercaseMessage)
                 !v.any { it.isLowerCase() } -> FormicaFieldResult.Error(lowercaseMessage)
@@ -104,7 +105,11 @@ object ValidationRules {
     fun url(
         protocolRequired: Boolean = false,
         message: String = "Must be a valid URL."
-    ): ValidationRule<String> = ValidationRule { v ->
+    ): ValidationRule<String?> = ValidationRule { v ->
+        if (v == null) {
+            return@ValidationRule FormicaFieldResult.NoInput
+        }
+
         val result = if (protocolRequired) {
             v.matches(HTTP_URL_PATTERN.toRegex())
         } else {
@@ -118,8 +123,12 @@ object ValidationRules {
         }
     }
 
-    fun checked(message: String = "Must be checked"): ValidationRule<Boolean> =
+    fun checked(message: String = "Must be checked"): ValidationRule<Boolean?> =
         ValidationRule { v ->
+            if (v == null) {
+                return@ValidationRule FormicaFieldResult.NoInput
+            }
+
             if (v) {
                 FormicaFieldResult.Success
             } else {
@@ -130,32 +139,40 @@ object ValidationRules {
     fun minLength(
         option: Int,
         message: String = "Must be at least $option characters long.",
-    ): ValidationRule<String> =
-        ValidationRule { v ->
-            if (v.count() >= option) {
-                FormicaFieldResult.Success
-            } else {
-                FormicaFieldResult.Error(message)
-            }
+    ): ValidationRule<String?> = ValidationRule { v ->
+        if (v == null) {
+            return@ValidationRule FormicaFieldResult.NoInput
         }
+        if (v.count() >= option) {
+            FormicaFieldResult.Success
+        } else {
+            FormicaFieldResult.Error(message)
+        }
+    }
 
     fun maxLength(
         option: Int,
         message: String = "Must not exceed $option characters.",
-    ): ValidationRule<String> =
-        ValidationRule { v ->
-            if (v.count() <= option) {
-                FormicaFieldResult.Success
-            } else {
-                FormicaFieldResult.Error(message)
-            }
+    ): ValidationRule<String?> = ValidationRule { v ->
+        if (v == null) {
+            return@ValidationRule FormicaFieldResult.NoInput
         }
+        if (v.count() <= option) {
+            FormicaFieldResult.Success
+        } else {
+            FormicaFieldResult.Error(message)
+        }
+    }
 
     fun range(
         min: Float,
         max: Float,
         message: String = "Must be a number between $min and $max.",
-    ): ValidationRule<Float> = ValidationRule { v ->
+    ): ValidationRule<Float?> = ValidationRule { v ->
+        if (v == null) {
+            return@ValidationRule FormicaFieldResult.NoInput
+        }
+
         if ((v >= min) && (v <= max)) {
             FormicaFieldResult.Success
         } else {
@@ -167,7 +184,11 @@ object ValidationRules {
         min: Int,
         max: Int,
         message: String = "Must be a number between $min and $max.",
-    ): ValidationRule<Int> = ValidationRule { v ->
+    ): ValidationRule<Int?> = ValidationRule { v ->
+        if (v == null) {
+            return@ValidationRule FormicaFieldResult.NoInput
+        }
+        
         if ((v >= min) && (v <= max)) {
             FormicaFieldResult.Success
         } else {
