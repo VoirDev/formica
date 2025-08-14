@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
@@ -45,7 +47,7 @@ val MainText = FormicaFieldId<FormSchema, String>(
     get = { it.text },
     set = { d, v -> d.copy(text = v) }
 )
-val Age = FormicaFieldId<FormSchema, Int?>(
+val Number = FormicaFieldId<FormSchema, Int?>(
     id = "number",
     get = { it.number },
     set = { d, v -> d.copy(number = v) }
@@ -73,6 +75,8 @@ val AdditionalText = FormicaFieldId<FormSchema, String?>(
 
 @Composable
 fun App() {
+    val verticalScroll = rememberScrollState()
+
     val formica = rememberFormica(
         initialData = FormSchema(
             text = "",
@@ -88,7 +92,12 @@ fun App() {
 
     val isActive = rememberFormicaFieldValue(formica, ActivateAdditionalText)
 
-    Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 48.dp)
+            .verticalScroll(verticalScroll)
+    ) {
         FormicaProvider(formica) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -143,7 +152,7 @@ fun App() {
 
                 // Number (optional, but must be >= 0 if provided)
                 FormicaField(
-                    id = Age,
+                    id = Number,
                     validators = setOf(
                         ValidationRule { v ->
                             if (v == null) FormicaFieldResult.Success
@@ -154,7 +163,14 @@ fun App() {
                 ) { field ->
                     FormFieldWrapper {
                         TextField(
+                            modifier = Modifier.fillMaxWidth(),
                             value = field.value?.toString().orEmpty(),
+                            label = {
+                                Text("Number text")
+                            },
+                            placeholder = {
+                                Text("1234")
+                            },
                             onValueChange = { s ->
                                 field.onChange(s.toIntOrNull())
                             }
