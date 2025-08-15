@@ -1,11 +1,11 @@
 [versions]
-agp = "8.7.3"
-android-compileSdk = "35"
+agp = "8.12.0"
+android-compileSdk = "36"
 android-minSdk = "24"
-android-targetSdk = "35"
-compose-plugin = "1.8.1" # https://github.com/JetBrains/compose-multiplatform
+android-targetSdk = "36"
+compose-plugin = "1.8.2" # https://github.com/JetBrains/compose-multiplatform
 junit = "4.13.2"
-kotlin = "2.1.21" # https://kotlinlang.org/docs/releases.html
+kotlin = "2.2.0" # https://kotlinlang.org/docs/releases.html
 kotlin-coroutines = "1.10.2" # https://github.com/Kotlin/kotlinx.coroutines
 androidx-activityCompose = "1.10.1" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
 
