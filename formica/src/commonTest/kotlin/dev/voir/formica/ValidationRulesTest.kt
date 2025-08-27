@@ -12,6 +12,9 @@ class ValidationRulesTest {
     private fun assertSuccess(result: FormicaFieldResult) =
         assertTrue(result is FormicaFieldResult.Success, "Expected Success, got $result")
 
+    private fun assertNoInput(r: FormicaFieldResult) =
+        assertTrue(r is FormicaFieldResult.NoInput, "Expected NoInput, got $r")
+
     private fun assertErrorMessage(result: FormicaFieldResult, expected: String) {
         when (result) {
             is FormicaFieldResult.Error -> assertEquals(expected, result.message)
@@ -185,25 +188,118 @@ class ValidationRulesTest {
         assertErrorMessage(max5.validate("abcdef"), "MAX5")
     }
 
-    // ---- range (Int) & range (Float) ---------------------------------------
+    // ---- range ---------------------------------------
 
     @Test
     fun range_int_inclusive() {
-        val r = ValidationRules.range(min = 2, max = 4, message = "RANGE")
-        assertErrorMessage(r.validate(1), "RANGE")
+        val r = ValidationRules.range(min = 2, max = 4, message = { min, max ->
+            "RANGE MIN $min AND MAX $max"
+        })
+        assertErrorMessage(r.validate(1), "RANGE MIN 2 AND MAX 4")
         assertSuccess(r.validate(2))  // min boundary
         assertSuccess(r.validate(3))
         assertSuccess(r.validate(4))  // max boundary
-        assertErrorMessage(r.validate(5), "RANGE")
+        assertErrorMessage(r.validate(5), "RANGE MIN 2 AND MAX 4")
     }
 
     @Test
     fun range_float_inclusive() {
-        val r = ValidationRules.range(min = 0.5f, max = 1.5f, message = "RANGEF")
-        assertErrorMessage(r.validate(0.49f), "RANGEF")
+        val r = ValidationRules.range(min = 0.5f, max = 1.5f, message = { min, max ->
+            "RANGE MIN $min AND MAX $max"
+        })
+        assertErrorMessage(r.validate(0.49f), "RANGE MIN 0.5 AND MAX 1.5")
         assertSuccess(r.validate(0.5f))
         assertSuccess(r.validate(1.0f))
         assertSuccess(r.validate(1.5f))
-        assertErrorMessage(r.validate(1.5001f), "RANGEF")
+        assertErrorMessage(r.validate(1.5001f), "RANGE MIN 0.5 AND MAX 1.5")
+    }
+
+
+    @Test
+    fun int_min_inclusive() {
+        val rule = ValidationRules.min(5) // inclusive by default
+        assertNoInput(rule.validate(null))
+        assertErrorMessage(rule.validate(4), "Must be >= 5.")
+        assertSuccess(rule.validate(5))
+        assertSuccess(rule.validate(6))
+    }
+
+    @Test
+    fun int_min_exclusive() {
+        val rule = ValidationRules.min(5, inclusive = false)
+        assertNoInput(rule.validate(null))
+        assertErrorMessage(rule.validate(5), "Must be > 5.")
+        assertSuccess(rule.validate(6))
+    }
+
+    @Test
+    fun int_max_inclusive() {
+        val rule = ValidationRules.max(10) // inclusive by default
+        assertNoInput(rule.validate(null))
+        assertSuccess(rule.validate(9))
+        assertSuccess(rule.validate(10))
+        assertErrorMessage(rule.validate(11), "Must be <= 10.")
+    }
+
+    @Test
+    fun int_max_exclusive() {
+        val rule = ValidationRules.max(10, inclusive = false)
+        assertNoInput(rule.validate(null))
+        assertSuccess(rule.validate(9))
+        assertErrorMessage(rule.validate(10), "Must be < 10.")
+    }
+
+    @Test
+    fun float_min_inclusive_noEpsilon() {
+        val rule = ValidationRules.min(1.5f) // inclusive, epsilon = 0f
+        assertNoInput(rule.validate(null))
+        assertNoInput(rule.validate(Float.NaN))
+        assertErrorMessage(rule.validate(1.4f), "Must be >= 1.5.")
+        assertSuccess(rule.validate(1.5f))
+        assertSuccess(rule.validate(1.5000001f))
+    }
+
+    @Test
+    fun float_min_exclusive_noEpsilon() {
+        val rule = ValidationRules.min(1.5f, inclusive = false)
+        assertNoInput(rule.validate(null))
+        assertNoInput(rule.validate(Float.NaN))
+        assertErrorMessage(rule.validate(1.5f), "Must be > 1.5.")
+        assertSuccess(rule.validate(1.500001f))
+    }
+
+    @Test
+    fun float_min_inclusive_withEpsilon() {
+        val rule = ValidationRules.min(min = 1.5f, inclusive = true, epsilon = 0.01f)
+        // With epsilon, values in [min - eps, +∞) are accepted (inclusive branch)
+        assertSuccess(rule.validate(1.491f))     // >= 1.5 - 0.01 = 1.49 → OK
+        assertErrorMessage(rule.validate(1.489f), "Must be >= 1.5.")
+    }
+
+    @Test
+    fun float_max_inclusive_noEpsilon() {
+        val rule = ValidationRules.max(2.5f) // inclusive, epsilon = 0f
+        assertNoInput(rule.validate(null))
+        assertNoInput(rule.validate(Float.NaN))
+        assertSuccess(rule.validate(2.4f))
+        assertSuccess(rule.validate(2.5f))
+        assertErrorMessage(rule.validate(2.6f), "Must be <= 2.5.")
+    }
+
+    @Test
+    fun float_max_exclusive_noEpsilon() {
+        val rule = ValidationRules.max(2.5f, inclusive = false)
+        assertNoInput(rule.validate(null))
+        assertNoInput(rule.validate(Float.NaN))
+        assertSuccess(rule.validate(2.4999f))
+        assertErrorMessage(rule.validate(2.5f), "Must be < 2.5.")
+    }
+
+    @Test
+    fun float_max_inclusive_withEpsilon() {
+        val rule = ValidationRules.max(max = 2.5f, inclusive = true, epsilon = 0.01f)
+        // With epsilon, values in (-∞, max + eps] are accepted (inclusive branch)
+        assertSuccess(rule.validate(2.509f))     // <= 2.5 + 0.01 = 2.51 → OK
+        assertErrorMessage(rule.validate(2.511f), "Must be <= 2.5.")
     }
 }
