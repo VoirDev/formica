@@ -71,6 +71,7 @@ class Formica<Data>(val initialData: Data, private val onSubmit: ((Data) -> Unit
             validateOnChange = validateOnChange
         )
         // Store in registry with erased generics
+        @Suppress("UNCHECKED_CAST")
         fields[id.id] = (id as FormicaFieldId<Data, Any?>) to (field as FormicaField<Any?>)
 
         return field

@@ -1,7 +1,6 @@
 package dev.voir.formica.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,6 +9,8 @@ import dev.voir.formica.Formica
 import dev.voir.formica.FormicaFieldId
 import dev.voir.formica.FormicaFieldResult
 import dev.voir.formica.ValidationRule
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /**
  * A stable snapshot of a form field's UI-facing state and operations.
@@ -87,13 +88,6 @@ fun <D, V> FormicaField(
     val touched by field.touched.collectAsState(initial = false)
     val dirty by field.dirty.collectAsState(initial = false)
 
-    // Optional: Keep field state in sync if form.data changes externally (e.g., loaded draft).
-    // This resets the field's internal state (value/error/touched/dirty) to match the new snapshot.
-    val dataSnapshot by form.data.collectAsState()
-    LaunchedEffect(dataSnapshot) {
-        field.reset(id.get(dataSnapshot))
-    }
-
     // Package the reactive state and callbacks into a stable adapter for the UI.
     val adapter = remember(value, error, touched, dirty) {
         FieldAdapter(
@@ -150,12 +144,38 @@ fun <D, V> FormicaField(
  * reactively (without registering a field).
  *
  * Returns the current value of the field from the immutable form data snapshot.
- * Will recompose whenever [form.data] changes.
  */
 @Composable
-fun <D, V> rememberFormicaFieldValue(form: Formica<D>, id: FormicaFieldId<D, V>): V? {
-    val data by form.data.collectAsState()
-    return id.get(data)
+fun <D, V> rememberFormicaFieldValue(
+    form: Formica<D>,
+    id: FormicaFieldId<D, V>,
+    // Optional comparator (useful for floats with epsilon)
+    areEquivalent: (V?, V?) -> Boolean = { a, b -> a == b }
+): V? {
+    // If the field is registered, prefer its own StateFlow (cheapest & already scoped)
+    val registered = remember(form, id) { form.getRegisteredField(id) }
+    val initial = remember(form, id) { id.get(form.data.value) }
+
+    return if (registered != null) {
+        registered.value.collectAsState(initial = initial).value
+    } else {
+        // Project the form snapshot to just this field and suppress identical emissions
+        val projected = remember(form, id, areEquivalent) {
+            form.data
+                .map { id.get(it) }
+                .distinctUntilChanged { old, new -> areEquivalent(old, new) }
+        }
+        projected.collectAsState(initial = initial).value
+    }
+}
+
+@Composable
+fun <D, V> rememberFormicaFieldValue(
+    id: FormicaFieldId<D, V>,
+    areEquivalent: (V?, V?) -> Boolean = { a, b -> a == b }
+): V? {
+    val form = formicaOf<D>()
+    return rememberFormicaFieldValue(form, id, areEquivalent)
 }
 
 /**
