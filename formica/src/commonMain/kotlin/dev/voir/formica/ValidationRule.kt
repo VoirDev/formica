@@ -164,36 +164,135 @@ object ValidationRules {
         }
     }
 
-    fun range(
-        min: Float,
-        max: Float,
-        message: String = "Must be a number between $min and $max.",
-    ): ValidationRule<Float?> = ValidationRule { v ->
-        if (v == null) {
-            return@ValidationRule FormicaFieldResult.NoInput
-        }
-
-        if ((v >= min) && (v <= max)) {
-            FormicaFieldResult.Success
-        } else {
-            FormicaFieldResult.Error(message)
-        }
+    fun <T> range(
+        min: T,
+        max: T,
+        inclusive: Boolean = true,
+        message: (min: T, max: T) -> String = { lo, hi -> "Must be a number between $lo and $hi." }
+    ): ValidationRule<T?> where T : Number, T : Comparable<T> = ValidationRule { v ->
+        if (v == null) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v >= min && v <= max else v > min && v < max
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(min, max))
     }
 
     fun range(
+        min: Double,
+        max: Double,
+        inclusive: Boolean = true,
+        epsilon: Double = 0.0,
+        message: (Double, Double) -> String = { lo, hi -> "Must be a number between $lo and $hi." }
+    ): ValidationRule<Double?> = ValidationRule { v ->
+        if (v == null || v.isNaN()) return@ValidationRule FormicaFieldResult.NoInput
+        val lower = if (inclusive) v >= min - epsilon else v > min + epsilon
+        val upper = if (inclusive) v <= max + epsilon else v < max - epsilon
+        if (lower && upper) FormicaFieldResult.Success else FormicaFieldResult.Error(
+            message(
+                min,
+                max
+            )
+        )
+    }
+
+    fun range(
+        min: Float,
+        max: Float,
+        inclusive: Boolean = true,
+        epsilon: Float = 0f,
+        message: (Float, Float) -> String = { lo, hi -> "Must be a number between $lo and $hi." }
+    ): ValidationRule<Float?> = ValidationRule { v ->
+        if (v == null || v.isNaN()) return@ValidationRule FormicaFieldResult.NoInput
+        val lower = if (inclusive) v >= min - epsilon else v > min + epsilon
+        val upper = if (inclusive) v <= max + epsilon else v < max - epsilon
+        if (lower && upper) FormicaFieldResult.Success else FormicaFieldResult.Error(
+            message(
+                min,
+                max
+            )
+        )
+    }
+
+    fun min(
         min: Int,
-        max: Int,
-        message: String = "Must be a number between $min and $max.",
+        inclusive: Boolean = true,
+        message: (Int) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
     ): ValidationRule<Int?> = ValidationRule { v ->
-        if (v == null) {
-            return@ValidationRule FormicaFieldResult.NoInput
-        }
-        
-        if ((v >= min) && (v <= max)) {
-            FormicaFieldResult.Success
-        } else {
-            FormicaFieldResult.Error(message)
-        }
+        if (v == null) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v >= min else v > min
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(min))
+    }
+
+    fun max(
+        max: Int,
+        inclusive: Boolean = true,
+        message: (Int) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
+    ): ValidationRule<Int?> = ValidationRule { v ->
+        if (v == null) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v <= max else v < max
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(max))
+    }
+    
+    fun min(
+        min: Long,
+        inclusive: Boolean = true,
+        message: (Long) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
+    ): ValidationRule<Long?> = ValidationRule { v ->
+        if (v == null) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v >= min else v > min
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(min))
+    }
+
+    fun max(
+        max: Long,
+        inclusive: Boolean = true,
+        message: (Long) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
+    ): ValidationRule<Long?> = ValidationRule { v ->
+        if (v == null) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v <= max else v < max
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(max))
+    }
+
+    fun min(
+        min: Double,
+        inclusive: Boolean = true,
+        epsilon: Double = 0.0,
+        message: (Double) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
+    ): ValidationRule<Double?> = ValidationRule { v ->
+        if (v == null || v.isNaN()) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v >= min - epsilon else v > min + epsilon
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(min))
+    }
+
+    fun max(
+        max: Double,
+        inclusive: Boolean = true,
+        epsilon: Double = 0.0,
+        message: (Double) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
+    ): ValidationRule<Double?> = ValidationRule { v ->
+        if (v == null || v.isNaN()) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v <= max + epsilon else v < max - epsilon
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(max))
+    }
+
+    fun min(
+        min: Float,
+        inclusive: Boolean = true,
+        epsilon: Float = 0f,
+        message: (Float) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
+    ): ValidationRule<Float?> = ValidationRule { v ->
+        if (v == null || v.isNaN()) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v >= min - epsilon else v > min + epsilon
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(min))
+    }
+
+    fun max(
+        max: Float,
+        inclusive: Boolean = true,
+        epsilon: Float = 0f,
+        message: (Float) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
+    ): ValidationRule<Float?> = ValidationRule { v ->
+        if (v == null || v.isNaN()) return@ValidationRule FormicaFieldResult.NoInput
+        val ok = if (inclusive) v <= max + epsilon else v < max - epsilon
+        if (ok) FormicaFieldResult.Success else FormicaFieldResult.Error(message(max))
     }
 }
 
