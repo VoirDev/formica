@@ -36,7 +36,8 @@ import dev.voir.formica.ui.rememberFormicaFieldValue
 
 data class FormSchema(
     var text: String,
-    var number: Int?,
+    var numberRequired: Int,
+    var numberOptional: Int?,
     var optionalText: String?,
     var activateAdditionalText: Boolean,
     var additionalText: String? = null,
@@ -47,10 +48,16 @@ val MainText = FormicaFieldId<FormSchema, String>(
     get = { it.text },
     set = { d, v -> d.copy(text = v) }
 )
-val Number = FormicaFieldId<FormSchema, Int?>(
-    id = "number",
-    get = { it.number },
-    set = { d, v -> d.copy(number = v) }
+val NumberRequired = FormicaFieldId<FormSchema, Int>(
+    id = "numberRequired",
+    get = { it.numberRequired },
+    set = { d, v -> d.copy(numberRequired = v) }
+)
+
+val NumberOptional = FormicaFieldId<FormSchema, Int?>(
+    id = "numberOptional",
+    get = { it.numberOptional },
+    set = { d, v -> d.copy(numberOptional = v) }
 )
 
 val OptionalText = FormicaFieldId<FormSchema, String?>(
@@ -80,7 +87,8 @@ fun App() {
     val formica = rememberFormica(
         initialData = FormSchema(
             text = "",
-            number = null,
+            numberRequired = 0,
+            numberOptional = null,
             optionalText = null,
             activateAdditionalText = false,
             additionalText = null,
@@ -150,9 +158,38 @@ fun App() {
                     }
                 }
 
+                // Number (required and must be >= 10 if provided)
+                FormicaField(
+                    id = NumberRequired,
+                    validators = setOf(
+                        ValidationRules.required(),
+                        ValidationRules.min(10)
+                    )
+                ) { field ->
+                    FormFieldWrapper {
+                        TextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            value = field.value?.toString().orEmpty(),
+                            label = {
+                                Text("Number (required and >= 10)")
+                            },
+                            placeholder = {
+                                Text("1234")
+                            },
+                            onValueChange = { s ->
+                                field.onChange(s.toIntOrNull())
+                            }
+                        )
+
+                        if (field.error != null) {
+                            Text(field.error!!, color = Color.Red)
+                        }
+                    }
+                }
+
                 // Number (optional, but must be >= 0 if provided)
                 FormicaField(
-                    id = Number,
+                    id = NumberOptional,
                     validators = setOf(
                         ValidationRule { v ->
                             if (v == null) FormicaFieldResult.Success
@@ -166,7 +203,7 @@ fun App() {
                             modifier = Modifier.fillMaxWidth(),
                             value = field.value?.toString().orEmpty(),
                             label = {
-                                Text("Number text")
+                                Text("Number (optional, but >= 0 if provided)")
                             },
                             placeholder = {
                                 Text("1234")
