@@ -1,4 +1,4 @@
-rootProject.name = "FormicaLibrary"
+rootProject.name = "FormicaKMP"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
