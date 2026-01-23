@@ -1,74 +1,59 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     id("maven-publish")
-    id("signing")
 }
 
 group = "dev.voir"
-version = "1.0.0-alpha02"
+version = "0.0.1"
 
 kotlin {
-    androidTarget {
-        publishLibraryVariants("release")
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64(),
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "Formica"
-            isStatic = true
-        }
-    }
-
-    sourceSets.all {
-        languageSettings.optIn("kotlin.experimental.ExperimentalObjCName")
-    }
+    jvm()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
-        androidMain.dependencies {
-        }
-
         commonMain.dependencies {
             implementation(libs.kotlin.reflect)
             implementation(libs.kotlin.coroutines)
 
-            implementation(compose.runtime)
+            implementation(libs.compose.runtime)
         }
-
-        iosMain.dependencies {
-        }
-
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        jvmMain.dependencies {
+        }
+        iosMain.dependencies {
+        }
     }
 }
 
-android {
-    namespace = "dev.voir.formica"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
-    defaultConfig {
-        minSdk = libs.versions.android.minSdk.get().toInt()
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            name.set("formica")
+            description.set("Formica – Kotlin Multiplatform form manager")
+            url.set("https://github.com/VoirDev/formica")
+        }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlin {
-        jvmToolchain(21)
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/VoirDev/formica")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }

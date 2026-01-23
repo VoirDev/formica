@@ -25,7 +25,15 @@ Add the following dependency to your project:
 
 ```gradle
 dependencies {
-    implementation("dev.voir.formica:1.0.0-alpha02") // Not available on public now, you can publish to mavenLocal.
+    implementation("dev.voir.formica:1.0.0")
+}
+
+maven {
+  url = uri("https://maven.pkg.github.com/VoirDev/formice")
+  credentials {
+    username = <your-github-user>
+    password = <your-github-token>
+  }
 }
 ```
 

@@ -1,0 +1,57 @@
+name: Publish library
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish package to Github Registry
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Derive version from release tag
+        id: ver
+        shell: bash
+        run: |
+          TAG="${{ github.event.release.tag_name || github.ref_name }}"
+          CLEAN="${TAG#v}"        # strip leading v if present
+          echo "VERSION=$CLEAN" >> "$GITHUB_OUTPUT"
+          echo "Release version: $CLEAN"
+
+      - name: Set root version (used by :proto via parent!!.version)
+        run: |
+          if [ -f gradle.properties ]; then
+            if grep -q '^version=' gradle.properties; then
+              sed -i "s/^version=.*/version=${{ steps.ver.outputs.VERSION }}/" gradle.properties
+            else
+              echo "version=${{ steps.ver.outputs.VERSION }}" >> gradle.properties
+            fi
+          else
+            echo "version=${{ steps.ver.outputs.VERSION }}" > gradle.properties
+          fi
+          echo "Using $(grep '^version=' gradle.properties)"
+
+      - name: Build library
+        run: ./gradlew :formica:clean :formica:build -x check
+
+      - name: Publish library to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :formica:publish

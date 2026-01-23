@@ -1,40 +1,50 @@
-name: Test the library
+name: Verify the library
 
 on:
   pull_request:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Run tests
     runs-on: macos-latest
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Read cache
-        uses: actions/cache@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
         with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build (all modules) with tests
+        run: ./gradlew --no-daemon clean build
+
+      - name: Publish test reports (always)
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-reports
           path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+            **/build/test-results/**
+            **/build/reports/tests/**
+          if-no-files-found: ignore
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'corretto'
-          java-version: '21'
-
-      - name: Run tests
+      - name: Publish build scans / reports (optional)
+        if: failure()
         run: |
-          ./gradlew formica:check
-
-      - name: Archive test report
-        uses: actions/upload-artifact@v4
-        with:
-          name: Test report
-          path: build/reports/tests/test
+          echo "Gradle build failed. See artifacts for reports."
