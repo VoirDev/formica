@@ -1,216 +1,256 @@
 # Formica
 
-**Formica** is a **Kotlin Compose Multiplatform** library for managing **form state**,
-**validation**, and **data binding** in a fully declarative way.  
-It eliminates boilerplate by giving you **reactive fields**, **built-in validators**, and
-**lens-based binding** for immutable form models.
+**Formica** is a lightweight, Kotlin Multiplatform-friendly form engine with:
+
+- Schema-based validation (no annotations, no reflection magic)
+- Reactive form state (per-field + whole form)
+- Compose-first API (but UI-agnostic core)
+- Full control over validation behavior
+- Immutable data support
 
 ---
 
 ## Features
 
-- **Immutable form data model** — no reflection, no direct mutation.
-- **Reactive fields** — each field tracks value, error, touched, dirty.
-- **Composable API** — `FormicaField` for inline field binding, `FormicaFieldState` for external
-  field state.
-- **Built-in validation rules** — or plug in your own.
-- **Scoped provider** — share the form across nested composables without prop drilling.
-- **Type-safe** — works with your data class directly.
+- **Schema DSL** (clean, composable validation)
+- **No annotations / no codegen**
+- **Field-level + form-level validation**
+- **Optional & conditional fields**
+- **Reactive state (dirty, touched, errors, etc.)**
+- **Compose integration**
+- **Works in Kotlin Multiplatform**
 
 ---
 
-## Installation
+## Modules
 
-Add the following dependency to your project:
-
-```gradle
-dependencies {
-    implementation("dev.voir.formica:1.0.0")
-}
-
-maven {
-  url = uri("https://maven.pkg.github.com/VoirDev/formice")
-  credentials {
-    username = <your-github-user>
-    password = <your-github-token>
-  }
-}
+```text
+formica.core     → runtime engine (state, validation, form logic)
+formica.schema   → schema DSL + validation rules
+formica.compose  → Compose integration layer
 ```
 
-## Getting started
+---
 
-1. Define your form data schema
+## Quick Start
+
+### 1. Define your model
 
 ```kotlin
-data class FormSchema(
-    val firstName: String,
-    val lastName: String?,
-    val email: String,
-    val subscribe: Boolean
+data class NewUser(
+    val email: String = "",
+    val name: String = "",
+    val address: String? = null,
+    val age: Int? = null,
+    val acceptedTerms: Boolean = false
 )
 ```
 
-2. Create Field IDs (lenses)
+---
+
+### 2. Create a schema
 
 ```kotlin
-val FirstName = FormicaFieldId<FormSchema, String>(
-    id = "firstName",
-    get = { it.firstName },
-    set = { data, value -> data.copy(firstName = value) },
-    clear = { data -> data.copy(firstName = "") }
-)
+val NewUserSchema = schema<NewUser> {
 
-val LastName = FormicaFieldId<FormSchema, String?>(
-    id = "lastName",
-    get = { it.lastName },
-    set = { data, value -> data.copy(lastName = value) },
-    clear = { data -> data.copy(lastName = null) }
-)
+    field(
+        property = NewUser::email,
+        set = { data, value -> data.copy(email = value ?: "") }
+    ) {
+        required("Email is required")
+        email("Invalid email")
+    }
 
-val Email = FormicaFieldId<FormSchema, String>(
-    id = "email",
-    get = { it.email },
-    set = { data, value -> data.copy(email = value) }
-)
+    field(
+        property = NewUser::name,
+        set = { data, value -> data.copy(name = value ?: "") }
+    ) {
+        notBlank("Name is required")
+        maxLength(50)
+    }
 
-val Subscribe = FormicaFieldId<FormSchema, Boolean>(
-    id = "subscribe",
-    get = { it.subscribe },
-    set = { data, value -> data.copy(subscribe = value) }
-)
-```
+    field(
+        property = NewUser::address,
+        set = { data, value -> data.copy(address = value) },
+        clear = { data -> data.copy(address = null) }
+    ) {
+        notBlank("Address cannot be blank if provided")
+    }
 
-3. Provide the form
+    field(
+        property = NewUser::age,
+        set = { data, value -> data.copy(age = value) },
+        clear = { data -> data.copy(age = null) }
+    ) {
+        min(18)
+    }
 
-```kotlin
-@Composable
-fun YourFormScreen() {
-    val form = rememberFormica(
-        initialData = FormSchema("", null, "", false),
-        onSubmit = { data ->
-            println("Form submitted: $data")
-        }
-    )
-
-    FormicaProvider(form) {
-        YourFormContent()
+    field(
+        property = NewUser::acceptedTerms,
+        set = { data, value -> data.copy(acceptedTerms = value ?: false) }
+    ) {
+        checked("You must accept terms")
     }
 }
 ```
 
-4. Build form UI
+---
+
+### 3. Use in Compose
 
 ```kotlin
 @Composable
-fun YourFormContent() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+fun NewUserScreen() {
+    val formica = rememberFormica(
+        adapter = NewUserSchema,
+        initialData = NewUser()
+    )
 
-        // Text field example
-        FormicaField(
-            id = FirstName,
-            validators = setOf(
-                ValidationRules.minLength(2, "First name must be at least 2 characters"),
-                ValidationRules.maxLength(64, "First name must not exceed 64 characters")
-            )
-        ) { field ->
-            TextField(
-                value = field.value.orEmpty(),
-                onValueChange = field.onChange,
-                label = { Text("First Name") },
-                isError = field.error != null
-            )
-            field.error?.let { Text(it, color = Color.Red) }
-        }
+    Formica(formica) { form ->
 
-        // Checkbox example
-        FormicaField(id = Subscribe) { field ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = field.value ?: false,
-                    onCheckedChange = field.onChange
-                )
-                Text("Subscribe to newsletter")
-            }
-        }
-
-        // Conditional field
-        FormFieldPresence(
-            form = formicaOf(),
-            id = Subscribe,
-            present = formicaOf<FormSchema>().data.value.subscribe
-        ) {
-            FormicaField(
-                id = Email,
-                validators = setOf(
-                    ValidationRules.validateOnlyIf(
-                        active = { formicaOf<FormSchema>().data.value.subscribe },
-                        rule = ValidationRules.email()
-                    )
-                )
-            ) { field ->
-                TextField(
-                    value = field.value.orEmpty(),
+        Field(NewUser::email) { field ->
+            Column {
+                OutlinedTextField(
+                    value = field.value ?: "",
                     onValueChange = field.onChange,
-                    label = { Text("Email Address") },
-                    isError = field.error != null
+                    isError = field.showError
                 )
-                field.error?.let { Text(it, color = Color.Red) }
+
+                if (field.showError && field.error != null) {
+                    Text(field.error)
+                }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-
-        Button(onClick = {
-            val result = formicaOf<FormSchema>().submit()
-            if (result is FormicaResult.Valid) {
-                println("Form valid, submitting...")
-            }
-        }) {
+        Button(
+            onClick = form.submit,
+            enabled = form.canSubmit
+        ) {
             Text("Submit")
         }
     }
 }
 ```
 
-## How to?
+---
 
-#### 1. Reading Field State Outside the Field
+## Core Concepts
 
-Sometimes you want to react to a field’s state elsewhere in the UI:
+### Schema-first validation
+
+No annotations. No reflection scanning.
+
+Validation is explicitly defined:
 
 ```kotlin
-val subscribeState = rememberFormicaFieldState(Subscribe)
+required()
+email()
+min(18)
+```
 
-if (subscribeState?.value == true) {
-    Text("Thanks for subscribing!")
+---
+
+### Reactive form state
+
+Each field tracks:
+
+```kotlin
+value
+error
+dirty
+touched
+visible
+enabled
+```
+
+The form tracks:
+
+```kotlin
+isDirty
+isTouched
+hasErrors
+canSubmit
+fieldErrors
+formErrors
+submitResult
+```
+
+---
+
+### Optional fields
+
+```kotlin
+val nickname: String? = null
+```
+
+Rules like `notBlank()`:
+
+- skip if `null`
+- validate if not null
+
+---
+
+### Conditional fields
+
+```kotlin
+visibleWhen { it.hasSecondaryAddress }
+enabledWhen { it.hasSecondaryAddress }
+```
+
+Hidden/disabled fields are automatically ignored during validation.
+
+---
+
+### Manual validation
+
+```kotlin
+validateOnChange(false)
+field.validate()
+```
+
+---
+
+### Object-level validation
+
+```kotlin
+objectRule { data ->
+    if (data.name == data.email) {
+        ObjectRuleResult(
+            fieldErrors = mapOf("name" to "Name must not equal email")
+        )
+    } else {
+        ObjectRuleResult()
+    }
 }
 ```
 
-#### 2. Use validation Rules
+---
 
-Formica ships with a set of ready-to-use rules:
+## Built-in Rules
 
-```kotlin
-ValidationRules.required()
-ValidationRules.email()
-ValidationRules.minLength(3)
-ValidationRules.maxLength(50)
-ValidationRules.range(0, 100)
-ValidationRules.checked()
-ValidationRules.validateOnlyIf({ condition }, ValidationRules.required())
-```
+### Strings
 
-Or create your own:
+- notEmpty()
+- notBlank()
+- email()
+- strongPassword()
+- url()
+- minLength()
+- maxLength()
 
-```kotlin
-val mustBeFoo = ValidationRule<String?> { v ->
-    if (v == "foo") FormicaFieldResult.Success
-    else FormicaFieldResult.Error("Must be 'foo'")
-}
-```
+### Numbers
 
-## License
+- min()
+- max()
+- range()
 
-This project is licensed under the GNU Lesser General Public License v3.0.
+### Boolean
 
-See the full license at https://www.gnu.org/licenses/lgpl-3.0.txt
+- checked()
+
+### Generic
+
+- required()
+- validateOnlyIf()
+
+---

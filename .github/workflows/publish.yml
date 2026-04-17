@@ -1,57 +1,160 @@
-name: Publish library
+name: Publish to Maven Central
 
 on:
-  release:
-    types: [ published ]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional version to publish (example: 1.1.0). If omitted, latest tag is used and minor is bumped."
+        required: false
+        type: string
+      release_name:
+        description: "Optional GitHub release title"
+        required: false
+        type: string
+      release_notes:
+        description: "Optional release notes"
+        required: false
+        type: string
 
 jobs:
   publish:
-    name: Publish package to Github Registry
-
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
-      packages: write
+      contents: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - name: Set up JDK
+      - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 21
+          java-version: "21"
           cache: gradle
 
-      - name: Derive version from release tag
-        id: ver
+      - name: Determine target version and tag
+        id: versioning
         shell: bash
         run: |
-          TAG="${{ github.event.release.tag_name || github.ref_name }}"
-          CLEAN="${TAG#v}"        # strip leading v if present
-          echo "VERSION=$CLEAN" >> "$GITHUB_OUTPUT"
-          echo "Release version: $CLEAN"
+          set -euo pipefail
 
-      - name: Set root version (used by :proto via parent!!.version)
-        run: |
-          if [ -f gradle.properties ]; then
-            if grep -q '^version=' gradle.properties; then
-              sed -i "s/^version=.*/version=${{ steps.ver.outputs.VERSION }}/" gradle.properties
-            else
-              echo "version=${{ steps.ver.outputs.VERSION }}" >> gradle.properties
-            fi
+          INPUT_VERSION="${{ inputs.version }}"
+
+          if [[ -n "$INPUT_VERSION" ]]; then
+            TARGET_VERSION="$INPUT_VERSION"
+            echo "Using provided version: $TARGET_VERSION"
           else
-            echo "version=${{ steps.ver.outputs.VERSION }}" > gradle.properties
+            LATEST_TAG="$(
+              git tag -l 'v*' \
+                | sed 's/^v//' \
+                | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+                | sort -V \
+                | tail -n 1
+            )"
+
+            if [[ -z "$LATEST_TAG" ]]; then
+              TARGET_VERSION="1.0.0"
+              echo "No release tags found. Using default version: $TARGET_VERSION"
+            else
+              echo "Latest release tag version: $LATEST_TAG"
+
+              if [[ ! "$LATEST_TAG" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+                echo "Latest tag version '$LATEST_TAG' is not valid semver (x.y.z)"
+                exit 1
+              fi
+
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              TARGET_VERSION="${MAJOR}.$((MINOR + 1)).0"
+
+              echo "No version provided. Bumped minor from latest tag to: $TARGET_VERSION"
+            fi
           fi
-          echo "Using $(grep '^version=' gradle.properties)"
 
-      - name: Build library
-        run: ./gradlew :formica:clean :formica:build -x check
+          if [[ ! "$TARGET_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Target version '$TARGET_VERSION' is not valid semver (x.y.z)"
+            exit 1
+          fi
 
-      - name: Publish library to GitHub Packages
+          TARGET_TAG="v${TARGET_VERSION}"
+
+          echo "Target version: $TARGET_VERSION"
+          echo "Target tag:     $TARGET_TAG"
+
+          if git ls-remote --tags origin "refs/tags/${TARGET_TAG}" | grep -q "refs/tags/${TARGET_TAG}$"; then
+            echo "Tag already exists on origin: $TARGET_TAG"
+            exit 1
+          fi
+
+          echo "target_version=$TARGET_VERSION" >> "$GITHUB_OUTPUT"
+          echo "target_tag=$TARGET_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Gradle sees target version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET_VERSION="${{ steps.versioning.outputs.target_version }}"
+          PROJECT_VERSION="$(./gradlew -q properties -Pversion="$TARGET_VERSION" | awk -F': ' '/^version:/ {print $2; exit}')"
+
+          echo "Gradle project version: $PROJECT_VERSION"
+          echo "Target version:         $TARGET_VERSION"
+
+          if [[ "$PROJECT_VERSION" != "$TARGET_VERSION" ]]; then
+            echo "Gradle version does not match target version."
+            exit 1
+          fi
+
+      - name: Publish to Maven Central
+        run: ./gradlew publishToMavenCentral -Pversion=${{ steps.versioning.outputs.target_version }} --no-configuration-cache
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :formica:publish
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+      - name: Create and push git tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ steps.versioning.outputs.target_tag }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag already exists locally: $TAG"
+            exit 1
+          fi
+
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ steps.versioning.outputs.target_tag }}"
+          RELEASE_NAME="${{ inputs.release_name }}"
+
+          if [[ -z "$RELEASE_NAME" ]]; then
+            RELEASE_NAME="$TAG"
+          fi
+
+          if [[ -n "${{ inputs.release_notes }}" ]]; then
+            gh release create "$TAG" \
+              --title "$RELEASE_NAME" \
+              --notes "${{ inputs.release_notes }}"
+          else
+            gh release create "$TAG" \
+              --title "$RELEASE_NAME" \
+              --generate-notes
+          fi
