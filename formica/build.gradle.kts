@@ -5,6 +5,9 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.36.0"
 }
 
+group = "dev.voir"
+version = "1.0.0"
+
 kotlin {
     jvmToolchain(21)
 
@@ -29,9 +32,16 @@ kotlin {
     }
 }
 
+val isLocalPublish = gradle.startParameter.taskNames.any {
+    it.contains("publishToMavenLocal", ignoreCase = true)
+}
+
 mavenPublishing {
     publishToMavenCentral()
-    signAllPublications()
+
+    if (!isLocalPublish) {
+        signAllPublications()
+    }
 
     coordinates(
         groupId = "dev.voir",
