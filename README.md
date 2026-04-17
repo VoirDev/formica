@@ -37,6 +37,32 @@ maven {
 }
 ```
 
+```kotlin
+val UserSchema = schema<User> {
+    field(User::email) {
+        required("Email is required")
+        email()
+    }
+
+    field(User::password) {
+        strongPassword()
+    }
+
+    field(User::age) {
+        min(18)
+        max(99)
+    }
+
+    field(User::website) {
+        url(protocolRequired = true)
+    }
+
+    field(User::termsAccepted) {
+        checked()
+    }
+}
+```
+
 ## Getting started
 
 1. Define your form data schema
