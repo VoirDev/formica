@@ -6,3 +6,6 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
 }
+
+group = "dev.voir"
+version = "1.0.1"
