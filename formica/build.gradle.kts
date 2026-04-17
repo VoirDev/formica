@@ -24,7 +24,7 @@ kotlin {
             implementation(libs.kotlin.reflect)
             implementation(libs.kotlin.coroutines)
 
-            implementation(libs.compose.runtime)
+            api(libs.compose.runtime)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

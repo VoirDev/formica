@@ -130,77 +130,77 @@ fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.range(
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.min(
+fun <Data : Any> SchemaFieldBuilder<Data, Int?>.min(
     min: Int,
     inclusive: Boolean = true,
     message: (Int) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
 ) {
-    rule(ValidationRules.min(min, inclusive, message) as ValidationRule<Value?>)
+    rule(ValidationRules.min(min, inclusive, message))
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.max(
+fun <Data : Any> SchemaFieldBuilder<Data, Int?>.max(
     max: Int,
     inclusive: Boolean = true,
     message: (Int) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
 ) {
-    rule(ValidationRules.max(max, inclusive, message) as ValidationRule<Value?>)
+    rule(ValidationRules.max(max, inclusive, message))
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.min(
+fun <Data : Any> SchemaFieldBuilder<Data, Long?>.min(
     min: Long,
     inclusive: Boolean = true,
     message: (Long) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
 ) {
-    rule(ValidationRules.min(min, inclusive, message) as ValidationRule<Value?>)
+    rule(ValidationRules.min(min, inclusive, message))
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.max(
+fun <Data : Any> SchemaFieldBuilder<Data, Long?>.max(
     max: Long,
     inclusive: Boolean = true,
     message: (Long) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
 ) {
-    rule(ValidationRules.max(max, inclusive, message) as ValidationRule<Value?>)
+    rule(ValidationRules.max(max, inclusive, message))
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.min(
+fun <Data : Any> SchemaFieldBuilder<Data, Double?>.min(
     min: Double,
     inclusive: Boolean = true,
     epsilon: Double = 0.0,
     message: (Double) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
 ) {
-    rule(ValidationRules.min(min, inclusive, epsilon, message) as ValidationRule<Value?>)
+    rule(ValidationRules.min(min, inclusive, epsilon, message))
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.max(
+fun <Data : Any> SchemaFieldBuilder<Data, Double?>.max(
     max: Double,
     inclusive: Boolean = true,
     epsilon: Double = 0.0,
     message: (Double) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
 ) {
-    rule(ValidationRules.max(max, inclusive, epsilon, message) as ValidationRule<Value?>)
+    rule(ValidationRules.max(max, inclusive, epsilon, message))
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.min(
+fun <Data : Any> SchemaFieldBuilder<Data, Float?>.min(
     min: Float,
     inclusive: Boolean = true,
     epsilon: Float = 0f,
     message: (Float) -> String = { "Must be ${if (inclusive) ">=" else ">"} $it." }
 ) {
-    rule(ValidationRules.min(min, inclusive, epsilon, message) as ValidationRule<Value?>)
+    rule(ValidationRules.min(min, inclusive, epsilon, message))
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <Data : Any, Value> SchemaFieldBuilder<Data, Value>.max(
+fun <Data : Any> SchemaFieldBuilder<Data, Float?>.max(
     max: Float,
     inclusive: Boolean = true,
     epsilon: Float = 0f,
     message: (Float) -> String = { "Must be ${if (inclusive) "<=" else "<"} $it." }
 ) {
-    rule(ValidationRules.max(max, inclusive, epsilon, message) as ValidationRule<Value?>)
+    rule(ValidationRules.max(max, inclusive, epsilon, message))
 }
